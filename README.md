@@ -13,3 +13,7 @@
 4. [图解超难理解的 Paxos 算法（含伪代码）](https://xie.infoq.cn/article/e53cbcd0e723e3a6ce4be3b8c)
 5. [Paxos & Raft lecture, Diego Ongaro](https://www.bilibili.com/video/BV1WW411a77S?from=search&seid=9258539723484618240&spm_id_from=333.337.0.0)
 6. [Paxos 的变种（一）：Multi-Paxos 是如何劝退大家去选择 Raft 的](https://xie.infoq.cn/article/92f6b1a031594da8164645459)
+
+## 1. 为什么需要Prepare请求
+ * 我们用prepare请求来阻塞掉老的提议
+ * 我们用prepare请求来找到可能已经被选定的值
