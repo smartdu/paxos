@@ -29,7 +29,9 @@
 
 ## 3. Multi-Paxos要解决的问题
  1. 当一个client发起请求时，我们要怎样为此请求选择一个log entry来存放这个命令？
+ > 一台服务器收到一个客户端的请求后，就会从自己最小的未知是否选定的位置开始，跑basic paxos，这个位置不成功的话就再找下一个未知是否选定的位置，直到成功为止。
  2. 怎么解决Basic-Paxos性能问题，每个Instance都会执行Prepare、Accept两次RPC请求？
+ > 如果proposer上次提交的值被选定，那proposer复用proposal number；如果proposer上次提交的值没有被选定，那根据paxos的步骤，proposer是必然要变更自己的proposal number
  3. 怎么确保一个完整的log副本被确定下来，并且让所有的server都知道这一份完整的log副本？
  4. 与client间的协议？
  5. 配置变更后，是否符合安全？
