@@ -17,8 +17,8 @@
 6. [Paxos 的变种（一）：Multi-Paxos 是如何劝退大家去选择 Raft 的](https://xie.infoq.cn/article/92f6b1a031594da8164645459)
 
 ## 1. 为什么需要Prepare请求
- * 我们用prepare请求来阻塞掉老的提议
- * 我们用prepare请求来找到可能已经被选定的值
+ 1. 我们用prepare请求来阻塞掉老的提议
+ 2. 我们用prepare请求来找到可能已经被选定的值
 
 ## 2. Multi-Paxos工作流程
 参考[paxos.pdf](https://ongardie.net/static/raft/userstudy/paxos.pdf)第18页
@@ -28,8 +28,12 @@
  4. 状态机处理完这个command，进入新的状态，并返回处理结果给client
 
 ## 3. Multi-Paxos要解决的问题
- * 当一个client发起请求时，我们要怎样为此请求选择一个log entry来存放这个命令？
- * 怎么解决Basic-Paxos性能问题，每个Instance都会执行Prepare、Accept两次RPC请求？
- * 怎么确保一个完整的log副本被确定下来，并且让所有的server都知道这一份完整的log副本？
- * 与client间的协议？
- * 配置变更后，是否符合安全？
+ 1. 当一个client发起请求时，我们要怎样为此请求选择一个log entry来存放这个命令？
+ 2. 怎么解决Basic-Paxos性能问题，每个Instance都会执行Prepare、Accept两次RPC请求？
+ 3. 怎么确保一个完整的log副本被确定下来，并且让所有的server都知道这一份完整的log副本？
+ 4. 与client间的协议？
+ 5. 配置变更后，是否符合安全？
+
+## 4. log的状态
+ 1. accept状态（只有acceptor知道log被accept）
+ 2. chosen状态（只有proposer知道log被chosen）
