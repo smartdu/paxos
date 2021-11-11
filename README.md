@@ -35,5 +35,7 @@
  5. 配置变更后，是否符合安全？
 
 ## 4. log的状态
+只有chosen状态的log才能传给状态机
  1. accept状态（只有acceptor知道log被accept）
  2. chosen状态（只有proposer知道log被chosen）
+
