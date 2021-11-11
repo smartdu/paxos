@@ -19,3 +19,17 @@
 ## 1. 为什么需要Prepare请求
  * 我们用prepare请求来阻塞掉老的提议
  * 我们用prepare请求来找到可能已经被选定的值
+
+## 2. Multi-Paxos工作流程
+参考[paxos.pdf](https://ongardie.net/static/raft/userstudy/paxos.pdf)第18页
+ 1. client希望状态机能执行一个command，它把这个请求发送给server的共识模块（consensus module）
+ 2. server的共识模块（consensus module）使用paxos，与其他server相互通信，并选择出这个log entry应该是什么值
+ 3. 一旦这个值被选定，这个值就可以输入到状态机中
+ 4. 状态机处理完这个command，进入新的状态，并返回处理结果给client
+
+## 3. Multi-Paxos要解决的问题
+ * 当一个client发起请求时，我们要怎样为此请求选择一个log entry来存放这个命令？
+ * 怎么解决Basic-Paxos性能问题，每个Instance都会执行Prepare、Accept两次RPC请求？
+ * 怎么确保一个完整的log副本被确定下来，并且让所有的server都知道这一份完整的log副本？
+ * 与client间的协议？
+ * 配置变更后，是否符合安全？
