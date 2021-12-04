@@ -47,6 +47,7 @@
 3. 要生成一个新的提议号时，server用maxRound+1来作为round number，拼接上自己的server id，就得到了一个提议号。
 4. 为了确保一个proposer在crash后重启，不会碰巧使用了之前用过的提议号，proposer每次更新maxRound时，必须马上把maxRound永久存储在磁盘里。
 
+提案比大小参考[base.h](https://github.com/Tencent/phxpaxos/blob/master/src/algorithm/base.h#L47)
 ```c++
 bool operator >= (const BallotNumber & other) const
 {
