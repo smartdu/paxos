@@ -41,3 +41,23 @@
  1. accept状态（只有acceptor知道log被accept）
  2. chosen状态（只有proposer知道log被chosen）
 
+## 5. 提案编号
+1. 把服务器id作为提议号的低bit部分。这就保证了其他服务器肯定不可能生成一样的号出来。
+2. 而提议号的高bit部分是一个round number。每个server都保存了自己至今为止所看到或用到过的最大的round number，设这个值为maxRound。
+3. 要生成一个新的提议号时，server用maxRound+1来作为round number，拼接上自己的server id，就得到了一个提议号。
+4. 为了确保一个proposer在crash后重启，不会碰巧使用了之前用过的提议号，proposer每次更新maxRound时，必须马上把maxRound永久存储在磁盘里。
+
+```c++
+bool operator >= (const BallotNumber & other) const
+{
+    if (m_llProposalID == other.m_llProposalID)
+    {
+        return m_llNodeID >= other.m_llNodeID;
+    }
+    else
+    {
+        return m_llProposalID >= other.m_llProposalID;
+    }
+}
+```
+
