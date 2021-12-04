@@ -1,4 +1,9 @@
 # paxos
+
+`Indeed, all working protocols for asynchronous consensus we have so far encountered have Paxos at their core. - Mike Burrows`
+
+事实上，我们迄今为止遇到的异步共识的所有工作协议都以Paxos为核心。
+
 目的：多节点之间如何就某个值（提案 Value）达成共识
 
 > Once a value has been chosen, future proposals must propose the same value.
