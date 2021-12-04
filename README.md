@@ -62,3 +62,12 @@ bool operator >= (const BallotNumber & other) const
 }
 ```
 
+## 6. Three possibilities when later proposal prepares
+1. Previous value already chosen:
+ - New proposer will find it and use it
+2. Previous value not chosen, but new proposer sees it:
+ - New proposer will use existing value
+ - Both proposers can succeed
+3. Previous value not chosen, new proposer doesn’t see it:
+ - New proposer chooses its own value
+ - Older proposal blocked
