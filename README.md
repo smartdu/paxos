@@ -6,6 +6,8 @@
 
 目的：多节点之间如何就某个值（提案 Value）达成共识
 
+paxos就是一个在异步通信环境，并容忍在只有多数派机器存活的情况下，仍然能完成一个一致性写入的协议。
+
 > Once a value has been chosen, future proposals must propose the same value.
 
 ```
