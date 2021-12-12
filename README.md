@@ -1,80 +1,31 @@
-# paxos
+[TOC]
 
-`Indeed, all working protocols for asynchronous consensus we have so far encountered have Paxos at their core. - Mike Burrows`
+# Paxos岛
 
-事实上，我们迄今为止遇到的异步共识的所有工作协议都以Paxos为核心。
+![img](./200331064753959_u162815.jpg)
 
-目的：多节点之间如何就某个值（提案 Value）达成共识
+&emsp;&emsp;在公元10世纪初，爱琴海的Paxos岛是一个繁荣的商业中心。经济发展带来了政治的进步。Paxos岛的公民们（Paxons）用议会形式的政府取代了古老的神权统治。但是对Paxos岛上的人来说，做生意才是头等大事，没人愿意把自己全部的时间投入到议会事务中，所以议会必须在每个议员都可能随时缺席的情况下也能正常工作下去。
 
-paxos就是一个在异步通信环境，并容忍在只有多数派机器存活的情况下，仍然能完成一个一致性写入的协议。
+&emsp;&emsp;Paxos岛上的文明已毁灭于一次异族入侵，考古学家只是最近才开始发掘它的历史，我们对Paxos议会的所知因此比较零散。虽然基本协议是知道的，但对许多细节我们却一无所知。如果你对这些细节感兴趣，我就冒昧猜测一下Paxon可能做了什么。
 
-> Once a value has been chosen, future proposals must propose the same value.
+<img src="./yihui.jpeg" alt="img" style="zoom: 50%;" />
 
-```
-1. 有一台或多台服务会提议（propose）一些值。
-2. 系统必须通过一定机制从提议（propose）的值中选定（chose）一个值。
-3. 只有一个值能被选定（chosen）。即不允许系统先选定了值A，后面又改选定值B。
-``` 
+&emsp;&emsp;议会的主要任务是确定这片土地上的法律，法律是由议会通过的一系列法令确定的。一个现代议会会聘任秘书来记录它的每一次活动，但在Paxos，没人愿意在整个会议期间留在议会厅担任秘书。取而代之，每个议员都有一个律簿（ledger），用来记录一系列已通过的法令，每个法令会带有一个编号。例如，议员A如果相信议会通过了第155号法令，那么他的律簿上有这样一条法令：**155: The olive tax is 3 drachmas per ton（橄榄税每吨3元）**。律簿上的法令是用擦不掉的墨水写的，法令是不能更改的。
 
-1. [用paxos实现多副本日志系统--basic paxos部分](https://cloud.tencent.com/developer/article/1147420)
-2. [用paxos实现多副本日志系统--multi paxos部分](https://cloud.tencent.com/developer/article/1158799)
-3. [Implementing Replicated Logs with Paxos](https://ongardie.net/static/raft/userstudy/paxos.pdf)
-4. [图解超难理解的 Paxos 算法（含伪代码）](https://xie.infoq.cn/article/e53cbcd0e723e3a6ce4be3b8c)
-5. [Paxos & Raft lecture, Diego Ongaro](https://www.bilibili.com/video/BV1WW411a77S?from=search&seid=9258539723484618240&spm_id_from=333.337.0.0)
-6. [Paxos 的变种（一）：Multi-Paxos 是如何劝退大家去选择 Raft 的](https://xie.infoq.cn/article/92f6b1a031594da8164645459)
+&emsp;&emsp;议会协议的第一个要求就是律簿是一致的，这意味着没有两个律簿不能有互相矛盾的法令。假设议员B在他的律簿上有一条法令：**132: Lamps must use only olive oil（灯只能使用橄榄油）**，那么就不会有其他议员的律簿上记录不同内容的第132号法令。当然，另一个议员可能还不知道第132号法令已经通过，他可能就不会在他的律簿上记录该法令。
 
-## 1. 为什么需要Prepare请求
- 1. 我们用prepare请求来阻塞掉老的提议
- 2. 我们用prepare请求来找到可能已经被选定的值
+&emsp;&emsp;**仅仅让所有律簿保持一致还不够**，因为让所有律簿都是空白的也能满足一致。**所以还需要一些要求（Requirement）来保证法令能最终通过并被记录在律簿中**。在现代议会中，议员之间的分歧会阻碍法令的通过。但在Paxos不是这样的，这里弥漫着相互信任的气氛，议员愿意通过任何提出的法令。然而他们四处游历的习性带来了一个问题。假如一组议员通过了第37号法令：**37: Painting on temple walls is forbidden（禁止在圣殿墙壁上画画）**，然后全都离开议会厅参加宴会去了。接着，另一组议员进入议会厅，他们对刚才发生的事情一无所知，然后通过了一个冲突的第37号法令：**37: Freedom of artistic expression is guaranteed（允许自由的艺术表达，可以在墙壁上画画）**。这样就失去了一致性。
 
-## 2. Multi-Paxos工作流程
-参考[paxos.pdf](https://ongardie.net/static/raft/userstudy/paxos.pdf)第18页
- 1. client希望状态机能执行一个command，它把这个请求发送给server的共识模块（consensus module）
- 2. server的共识模块（consensus module）使用paxos，与其他server相互通信，并选择出这个log entry应该是什么值
- 3. 一旦这个值被选定，这个值就可以输入到状态机中
- 4. 状态机处理完这个command，进入新的状态，并返回处理结果给client
+&emsp;&emsp;除非有足够多的议员在议会厅停留足够长的时间，否则就无法保证律簿一致性（Progress could not be guaranteed）。Paxos的议员不愿意减少他们在外面的活动，所以无法确保任何法令都会最终被通过。然而议员们保证，只要他们在议会厅，他们和他们的助手就会快速处理所有的议会事务。他们定制了如下的议会协议书：**如果议员中的大多数都在议会厅，那么任何法令都会被通过，并且每个已经通过的法令将出现在每一个议员的律簿上（以议员中的大多数作为前提，能够保证对于任意两次的提议，至少存在同一个议员参与了这两次的提议）。**
 
-## 3. Multi-Paxos要解决的问题
- 1. 当一个client发起请求时，我们要怎样为此请求选择一个log entry来存放这个命令？
- > 一台服务器收到一个客户端的请求后，就会从自己最小的未知是否选定的位置开始，跑basic paxos，这个位置不成功的话就再找下一个未知是否选定的位置，直到成功为止。
- 2. 怎么解决Basic-Paxos性能问题，每个Instance都会执行Prepare、Accept两次RPC请求？
- > 如果proposer上次提交的值被选定，那proposer复用proposal number；如果proposer上次提交的值没有被选定，那根据paxos的步骤，proposer是必然要变更自己的proposal number
- 3. 怎么确保一个完整的log副本被确定下来，并且让所有的server都知道这一份完整的log副本？
- 4. 与client间的协议？
- 5. 配置变更后，是否符合安全？
+<img src="./16pic_1500112_b.jpg" alt="img" style="zoom: 25%;" />
 
-## 4. log的状态
-只有chosen状态的log才能传给状态机
- 1. accept状态（只有acceptor知道log被accept）
- 2. chosen状态（只有proposer知道log被chosen）
+&emsp;&emsp;只有为议员提供必要的资源，才能实现议会协议的要求。每个议员都收到了一本结实的律簿（用来记录法令，用最好的羊皮纸做的）、一只笔和一些擦不掉的墨水。可能议员离开了议会厅忘记了自己做了什么（议员A在出议会厅后被落下的雕像击中头部，得了失忆症），所以他们会把一些重要的议会任务（notes）记在律簿的背面，这些议会任务是可以被划掉的，但律簿上的法令永远不会划掉。为了让每个议员知道时间过去了多久，他们还收到了简单的沙漏计时器。
 
-## 5. 提案编号
-1. 把服务器id作为提议号的低bit部分。这就保证了其他服务器肯定不可能生成一样的号出来。
-2. 而提议号的高bit部分是一个round number。每个server都保存了自己至今为止所看到或用到过的最大的round number，设这个值为maxRound。
-3. 要生成一个新的提议号时，server用maxRound+1来作为round number，拼接上自己的server id，就得到了一个提议号。
-4. 为了确保一个proposer在crash后重启，不会碰巧使用了之前用过的提议号，proposer每次更新maxRound时，必须马上把maxRound永久存储在磁盘里。
+&emsp;&emsp;议员随时带着他们的律簿，他们总能从律簿上读到法令和尚未划掉的议会任务。议员还会在小纸条上写下其他笔记，如果他离开了议会厅小纸条会丢失。
 
-提案比大小参考[base.h](https://github.com/Tencent/phxpaxos/blob/master/src/algorithm/base.h#L47)
-```c++
-bool operator >= (const BallotNumber & other) const
-{
-    if (m_llProposalID == other.m_llProposalID)
-    {
-        return m_llNodeID >= other.m_llNodeID;
-    }
-    else
-    {
-        return m_llProposalID >= other.m_llProposalID;
-    }
-}
-```
+&emsp;&emsp;议会厅比较嘈杂听不清，不可能在里面做演讲，只能通过信使来沟通，有专款来供议员雇佣任意多多他们需要的信使。信使不会篡改消息，但是他可能会忘记他递送过了一个消息，然后用重复递送一遍。像他们服务的议员一样，信使也只把一部分时间用于议会职责上。一个信使在递送一个消息前可能会离开议会厅去处理其他的事情--比如一次为期6个月的海上航行。他甚至可能会一去不复返，在这种情况下，消息将永远不会被送达。
 
-## 6. Three possibilities when later proposal prepares
-1. Previous value already chosen:
- - New proposer will find it and use it
-2. Previous value not chosen, but new proposer sees it:
- - New proposer will use existing value
- - Both proposers can succeed
-3. Previous value not chosen, new proposer doesn’t see it:
- - New proposer chooses its own value
- - Older proposal blocked
+&emsp;&emsp;虽然议员和信使可以在任何时候进出议会厅，但当他们进入议会厅时，他们会全身心地投入到议会事务中。只要呆在议会厅，信使会很快的投递消息，议员会立即快速的处理他们收到的消息。
+
+&emsp;&emsp;Paxos的官方声称，议员和信使是绝对诚实的，不诚实的虽然少，但毫无疑问一定是存在的，但由于官方从未提及，我们也不知道议会是怎么应付不诚实的议员或信使的。（这也是Paxos和拜占庭问题的区别。Paxos假设消息会丢失，但在传输过程中不会被篡改；而拜占庭问题则描述的是将军冢存在内奸，消息可能会被篡改。）
